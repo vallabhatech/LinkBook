@@ -1,4 +1,4 @@
-import { format, parse, addMinutes, isWithinInterval, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
+import { parseISO } from 'date-fns';
 
 export interface TimeSlot {
   startTime: string; // HH:mm
@@ -39,7 +39,7 @@ export function generateTimeSlots(
   workingHours: WorkingHoursData | null,
   serviceDuration: number, // in minutes
   existingBookings: BookingData[],
-  date: string // YYYY-MM-DD
+  _date: string // YYYY-MM-DD (reserved for future use)
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
 

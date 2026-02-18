@@ -97,7 +97,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         breakEnd: workingHours.breakEnd,
       },
       service.durationMinutes,
-      existingBookings
+      existingBookings,
+      date
     );
 
     // Filter to only available slots

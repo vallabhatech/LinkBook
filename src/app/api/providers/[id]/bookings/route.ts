@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken, getTokenFromHeader } from '@/lib/auth';
-import { format, startOfDay, endOfDay, parseISO } from 'date-fns';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
