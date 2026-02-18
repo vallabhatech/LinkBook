@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// User model for authentication
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  name            String
+  phone           String?
+  role            String           @default("provider") // provider, admin
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  serviceProvider ServiceProvider?
+}
+
+// Service Provider (Business)
+model ServiceProvider {
+  id           String         @id @default(uuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName String
+  category     String         // salon, clinic, spa, other
+  description  String?
+  address      String?
+  phone        String?
+  email        String?
+  logoUrl      String?
+  slug         String         @unique
+  queueEnabled Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  workingHours WorkingHours[]
+  services     Service[]
+  staff        Staff[]
+  bookings     Booking[]
+  queueTokens  QueueToken[]
+}
+
+// Working Hours for each day
+model WorkingHours {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  dayOfWeek         Int // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  isOpen            Boolean         @default(true)
+  openTime          String // HH:mm format
+  closeTime         String // HH:mm format
+  breakStart        String? // HH:mm format (optional)
+  breakEnd          String? // HH:mm format (optional)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([serviceProviderId, dayOfWeek])
+}
+
+// Services offered by provider
+model Service {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  price             Float
+  durationMinutes   Int
+  active            Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  bookings          Booking[]
+  staffServices     StaffService[]
+}
+
+// Staff members
+model Staff {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  name              String
+  role              String?
+  active            Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  bookings          Booking[]
+  staffServices     StaffService[]
+}
+
+// Many-to-many relationship between Staff and Service
+model StaffService {
+  id        String  @id @default(uuid())
+  staffId   String
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, serviceId])
+}
+
+// Bookings
+model Booking {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  serviceId         String
+  service           Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staffId           String?
+  staff             Staff?          @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  customerName      String
+  customerPhone     String
+  customerEmail     String?
+  notes             String?
+  date              String // YYYY-MM-DD format
+  startTime         String // HH:mm format
+  endTime           String // HH:mm format
+  status            String          @default("pending") // pending, confirmed, rejected, completed, no_show
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Queue Tokens for walk-in customers
+model QueueToken {
+  id                String          @id @default(uuid())
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id], onDelete: Cascade)
+  tokenNumber       Int
+  customerName      String?
+  customerPhone     String?
+  status            String          @default("waiting") // waiting, serving, completed, skipped
+  estimatedWaitTime Int? // in minutes
+  date              String // YYYY-MM-DD format
+  createdAt         DateTime        @default(now())
+  servedAt          DateTime?
+  completedAt       DateTime?
+}
